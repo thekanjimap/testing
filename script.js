@@ -1,6 +1,41 @@
 // Copyright 2026 Do Hoa Hiep All Rights Reserved.
-document.addEventListener("DOMContentLoaded", function() {
+function initHeroAndGraph() {
     const circleBox = document.getElementById("circleBox");
+    if (!circleBox) return;
+
+    if (sessionStorage.getItem('hasVisited') === 'true') {
+        circleBox.style.display = "none";
+        const searchContainer = document.getElementById("searchContainer");
+        const searchBox = document.getElementById("searchBox");
+        const searchInput = document.getElementById("searchInput");
+        
+        if (searchContainer) searchContainer.style.display = "block";
+        if (searchBox) searchBox.classList.add("step1-circle", "step3-bar", "loaded");
+        if (searchInput) searchInput.classList.add("step4-show");
+        
+        const graphContainer = document.getElementById("graph-container");
+        const appTitle = document.getElementById("appTitle");
+        const visitCounter = document.getElementById("visitCounter");
+        const feedbackBox = document.getElementById("feedbackBox");
+        const toolBar = document.getElementById("toolBarWrapper");
+        
+        if (graphContainer) graphContainer.classList.add("show");
+        if (appTitle) appTitle.classList.add("show");
+        if (visitCounter) visitCounter.classList.add("show");
+        if (feedbackBox) feedbackBox.classList.add("show");
+        if (toolBar) toolBar.classList.add("show");
+        
+        renderKanjiGraph(sampleData);
+        setupSearchHandlers();
+        
+        if (!window.pingIntervalSet) {
+            pingTracker();
+            setInterval(pingTracker, 300000);
+            window.pingIntervalSet = true;
+        }
+        return;
+    }
+
     const gifDuration = 4000;
     if (window.innerWidth <= 768) {
         const mobileNotice = document.createElement("div");
@@ -66,9 +101,13 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 1000);
     }, gifDuration);
     
-    pingTracker();
-    setInterval(pingTracker, 300000);
-});
+    if (!window.pingIntervalSet) {
+        pingTracker();
+        setInterval(pingTracker, 300000);
+        window.pingIntervalSet = true;
+    }
+}
+document.addEventListener("DOMContentLoaded", initHeroAndGraph);
 
 function setupSearchHandlers() {
     const searchInput = document.getElementById("searchInput");
@@ -994,9 +1033,10 @@ if (infoBoxEl && window.ResizeObserver) {
     });
     resizeObserver.observe(infoBoxEl);
 }
-document.addEventListener("DOMContentLoaded", function() {
+function initFeedbackBox() {
     const feedbackBox = document.getElementById('feedbackBox');
     const feedbackContent = document.getElementById('feedbackContent');
+    if (!feedbackBox) return;
     const feedbackCloseBtn = document.getElementById('feedbackCloseBtn');
     const feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
     const feedbackInput = document.getElementById('feedbackInput');
@@ -1045,10 +1085,12 @@ document.addEventListener("DOMContentLoaded", function() {
             }, 2000);
         }
     });
-});
-document.addEventListener("DOMContentLoaded", function() {
+}
+document.addEventListener("DOMContentLoaded", initFeedbackBox);
+function initAppTitleEffect() {
     const appTitle = document.getElementById("appTitle");
     const fallingH = document.getElementById("fallingH");
+    if (!appTitle) return;
     const oaHiepText = document.getElementById("oaHiepText");
     const grabHand = document.getElementById("grabHand");
     const hoahiepContainer = document.getElementById("hoahiepContainer");
@@ -1137,8 +1179,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     appTitle.addEventListener("mouseenter", triggerFallEffect);
     appTitle.addEventListener("touchstart", triggerFallEffect, {passive: true});
-});
-document.addEventListener("DOMContentLoaded", function() {
+}
+document.addEventListener("DOMContentLoaded", initAppTitleEffect);
+function initToolbarObserver() {
     const vocabList = document.getElementById("vocabList");
     const feedbackBox = document.getElementById("feedbackBox");
 
@@ -1186,12 +1229,15 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         observer.observe(vocabList, { attributes: true, attributeFilter: ['class'] });
     }
-});
-document.addEventListener("DOMContentLoaded", function() {
-    const toast = document.createElement('div');
-    toast.className = 'dev-toast';
-    toast.innerText = 'Tính năng đang được phát triển!';
-    document.body.appendChild(toast);
+}
+document.addEventListener("DOMContentLoaded", initToolbarObserver);
+function initFlashcardTools() {
+    if (!document.querySelector('.dev-toast')) {
+        const toast = document.createElement('div');
+        toast.className = 'dev-toast';
+        toast.innerText = 'Tính năng đang được phát triển!';
+        document.body.appendChild(toast);
+    }
 
     let toastTimer;
     function showDevToast() {
@@ -1685,12 +1731,21 @@ document.addEventListener("DOMContentLoaded", function() {
             printWindow.document.close();
         });
     }
-});
+}
+document.addEventListener("DOMContentLoaded", initFlashcardTools);
 const resetScrollTop = () => {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
 };
+
+function reinitPageAfterTransition() {
+    if (typeof initHeroAndGraph === 'function') initHeroAndGraph();
+    if (typeof initFeedbackBox === 'function') initFeedbackBox();
+    if (typeof initAppTitleEffect === 'function') initAppTitleEffect();
+    if (typeof initToolbarObserver === 'function') initToolbarObserver();
+    if (typeof initFlashcardTools === 'function') initFlashcardTools();
+}
 
 function initSmoothPageTransitions() {
     const loader = document.getElementById('loader');
@@ -1736,6 +1791,8 @@ function initSmoothPageTransitions() {
                     history.pushState({}, '', targetUrl);
                     
                     resetScrollTop();
+                    
+                    reinitPageAfterTransition();
                     
                     const newLoader = document.getElementById('loader');
                     if (newLoader) {
