@@ -3,14 +3,16 @@ function initHeroAndGraph() {
     const circleBox = document.getElementById("circleBox");
     if (!circleBox) return;
 
-    if (sessionStorage.getItem('hasVisited') === 'true') {
+    if (window.hasPlayedHero) {
         circleBox.style.display = "none";
         const searchContainer = document.getElementById("searchContainer");
         const searchBox = document.getElementById("searchBox");
+        const searchInnerCircle = document.getElementById("searchInnerCircle");
         const searchInput = document.getElementById("searchInput");
         
         if (searchContainer) searchContainer.style.display = "block";
         if (searchBox) searchBox.classList.add("step1-circle", "step3-bar", "loaded");
+        if (searchInnerCircle) searchInnerCircle.classList.add("step2-spin", "step3-move");
         if (searchInput) searchInput.classList.add("step4-show");
         
         const graphContainer = document.getElementById("graph-container");
@@ -25,6 +27,8 @@ function initHeroAndGraph() {
         if (feedbackBox) feedbackBox.classList.add("show");
         if (toolBar) toolBar.classList.add("show");
         
+        const filterBox = document.getElementById("filterBox");
+        if (filterBox) filterBox.classList.add("show");
         renderKanjiGraph(sampleData);
         setupSearchHandlers();
         
@@ -35,6 +39,8 @@ function initHeroAndGraph() {
         }
         return;
     }
+
+    window.hasPlayedHero = true;
 
     const gifDuration = 4000;
     if (window.innerWidth <= 768) {
@@ -81,6 +87,8 @@ function initHeroAndGraph() {
                             document.getElementById("appTitle").classList.add("show");
                             document.getElementById("visitCounter").classList.add("show");
                             document.getElementById("feedbackBox").classList.add("show");
+                            const filterBox = document.getElementById("filterBox");
+                            if (filterBox) filterBox.classList.add("show");
                             const toolBar = document.getElementById("toolBarWrapper");
                             if (toolBar) {
                                 toolBar.classList.add("show");
@@ -107,7 +115,6 @@ function initHeroAndGraph() {
         window.pingIntervalSet = true;
     }
 }
-document.addEventListener("DOMContentLoaded", initHeroAndGraph);
 
 function setupSearchHandlers() {
     const searchInput = document.getElementById("searchInput");
@@ -1086,7 +1093,6 @@ function initFeedbackBox() {
         }
     });
 }
-document.addEventListener("DOMContentLoaded", initFeedbackBox);
 function initAppTitleEffect() {
     const appTitle = document.getElementById("appTitle");
     const fallingH = document.getElementById("fallingH");
@@ -1180,78 +1186,68 @@ function initAppTitleEffect() {
     appTitle.addEventListener("mouseenter", triggerFallEffect);
     appTitle.addEventListener("touchstart", triggerFallEffect, {passive: true});
 }
-document.addEventListener("DOMContentLoaded", initAppTitleEffect);
 function initToolbarObserver() {
+    const toolBarWrapper = document.getElementById("toolBarWrapper");
+    if (!toolBarWrapper) return;
+
+    const toolBarTab = document.getElementById("toolBarTab");
+    const toolBarMain = document.getElementById("toolBarMain");
+    let toolBarTimer;
+
+    function startToolBarTimer() {
+        clearTimeout(toolBarTimer);
+        if (window.innerWidth <= 768 && !toolBarWrapper.classList.contains("collapsed")) {
+            toolBarTimer = setTimeout(() => {
+                toolBarWrapper.classList.add("collapsed");
+            }, 4000); 
+        }
+    }
+    const circleBox = document.getElementById("circleBox");
+    if (circleBox && circleBox.style.display === "none") {
+        toolBarWrapper.classList.add("show");
+        toolBarWrapper.classList.remove("collapsed");
+        startToolBarTimer();
+    }
+
+    if (toolBarTab) {
+        toolBarTab.addEventListener("click", () => {
+            toolBarWrapper.classList.toggle("collapsed");
+            startToolBarTimer();
+        });
+    }
+
+    if (toolBarMain) {
+        toolBarMain.addEventListener("click", startToolBarTimer);
+        toolBarMain.addEventListener("touchstart", startToolBarTimer, {passive: true});
+    }
+
     const vocabList = document.getElementById("vocabList");
     const feedbackBox = document.getElementById("feedbackBox");
-
-    if (vocabList && feedbackBox) {
-        const toolBarWrapper = document.getElementById("toolBarWrapper");
-        const toolBarTab = document.getElementById("toolBarTab");
-        const toolBarMain = document.getElementById("toolBarMain");
-        let toolBarTimer;
-
-        function startToolBarTimer() {
-            clearTimeout(toolBarTimer);
-            if (window.innerWidth <= 768 && toolBarWrapper && !toolBarWrapper.classList.contains("collapsed")) {
-                toolBarTimer = setTimeout(() => {
-                    toolBarWrapper.classList.add("collapsed");
-                }, 5000);
-            }
-        }
-
-        if (toolBarTab) {
-            toolBarTab.addEventListener("click", () => {
-                toolBarWrapper.classList.toggle("collapsed");
-                startToolBarTimer();
-            });
-        }
-
-        if (toolBarMain) {
-            toolBarMain.addEventListener("click", startToolBarTimer);
-            toolBarMain.addEventListener("touchstart", startToolBarTimer, {passive: true});
-        }
-
+    
+    if (vocabList) {
         const observer = new MutationObserver(function() {
             if (vocabList.classList.contains("step1-width")) {
                 if (window.innerWidth <= 768) {
-                    feedbackBox.classList.add("hide-on-mobile");
+                    if (feedbackBox) feedbackBox.classList.add("hide-on-mobile");
                 } else {
-                    if (toolBarWrapper) toolBarWrapper.classList.add("hidden-by-vocab");
+                    toolBarWrapper.classList.add("hidden-by-vocab");
                 }
             } else {
                 if (window.innerWidth <= 768) {
-                    feedbackBox.classList.remove("hide-on-mobile");
+                    if (feedbackBox) feedbackBox.classList.remove("hide-on-mobile");
                 } else {
-                    if (toolBarWrapper) toolBarWrapper.classList.remove("hidden-by-vocab");
+                    toolBarWrapper.classList.remove("hidden-by-vocab");
                 }
             }
         });
         observer.observe(vocabList, { attributes: true, attributeFilter: ['class'] });
     }
 }
-document.addEventListener("DOMContentLoaded", initToolbarObserver);
+
 function initFlashcardTools() {
-    if (!document.querySelector('.dev-toast')) {
-        const toast = document.createElement('div');
-        toast.className = 'dev-toast';
-        toast.innerText = 'Tính năng đang được phát triển!';
-        document.body.appendChild(toast);
-    }
-
-    let toastTimer;
-    function showDevToast() {
-        clearTimeout(toastTimer);
-        toast.classList.add('show');
-        toastTimer = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2000);
-    }
-
     const btnFlashcard = document.getElementById('btnFlashcard');
     const btnMindmap = document.getElementById('btnMindmap');
     const btnPrint = document.getElementById('btnPrint');
-
     if (btnFlashcard) {
         btnFlashcard.addEventListener('click', function() {
             const words = [];
@@ -1631,7 +1627,7 @@ function initFlashcardTools() {
         renderNextCard();
         document.getElementById('fcOverlay').classList.add('show');
     }
-    if (btnMindmap) btnMindmap.addEventListener('click', showDevToast);
+
     
     if (btnPrint) {
         btnPrint.addEventListener('click', function() {
@@ -1732,12 +1728,97 @@ function initFlashcardTools() {
         });
     }
 }
-document.addEventListener("DOMContentLoaded", initFlashcardTools);
 const resetScrollTop = () => {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
 };
+
+function initFilterUI() {
+    const filterBox = document.getElementById("filterBox");
+    if (!filterBox) return;
+
+    const filterClosedView = document.getElementById("filterClosedView");
+    const filterItems = document.querySelectorAll(".filter-item");
+
+    // SVG icon N nguyên bản
+    const defaultSvg = `<svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 18 7 6 17 18 17 6"></polyline></svg>`;
+
+    // Mở bộ lọc
+    filterBox.addEventListener("click", (e) => {
+        if (!filterBox.classList.contains("expanded") && !window.isDraggingFilter) {
+            filterBox.classList.add("expanded");
+        }
+    });
+
+    // Đóng bộ lọc
+    document.addEventListener("click", (e) => {
+        if (!filterBox.contains(e.target)) {
+            filterBox.classList.remove("expanded");
+        }
+    });
+
+    // Chọn chức năng
+    filterItems.forEach(item => {
+        item.addEventListener("click", (e) => {
+            e.stopPropagation();
+            
+            filterItems.forEach(btn => btn.classList.remove("active"));
+            item.classList.add("active");
+
+            const filterVal = item.getAttribute("data-filter");
+            
+            if (filterVal === "all") {
+                filterClosedView.innerHTML = defaultSvg;
+            } else {
+                // Giờ chỉ cần copy nguyên khối SVG đã vẽ bằng nét vào view khi thu gọn
+                filterClosedView.innerHTML = item.innerHTML;
+            }
+
+            filterBox.classList.remove("expanded");
+        });
+    });
+
+    // Di chuyển trên điện thoại
+    let startY = 0;
+    let initialTop = 0;
+    window.isDraggingFilter = false;
+
+    filterBox.addEventListener("touchstart", (e) => {
+        if (window.innerWidth > 768 || filterBox.classList.contains("expanded")) return;
+        startY = e.touches[0].clientY;
+        initialTop = filterBox.offsetTop;
+        window.isDraggingFilter = false;
+        filterBox.classList.add("dragging"); 
+    }, { passive: true });
+
+    filterBox.addEventListener("touchmove", (e) => {
+        if (window.innerWidth > 768 || filterBox.classList.contains("expanded")) return;
+        
+        let currentY = e.touches[0].clientY;
+        let deltaY = currentY - startY;
+        
+        if (Math.abs(deltaY) > 5) {
+            window.isDraggingFilter = true;
+            e.preventDefault(); 
+        }
+
+        if (window.isDraggingFilter) {
+            let newTop = initialTop + deltaY;
+            const minY = 80;
+            const maxY = window.innerHeight - 150;
+            newTop = Math.max(minY, Math.min(maxY, newTop));
+            filterBox.style.top = newTop + "px";
+        }
+    }, { passive: false }); 
+
+    filterBox.addEventListener("touchend", () => {
+        filterBox.classList.remove("dragging");
+        setTimeout(() => {
+            window.isDraggingFilter = false;
+        }, 50);
+    });
+}
 
 function reinitPageAfterTransition() {
     if (typeof initHeroAndGraph === 'function') initHeroAndGraph();
@@ -1745,14 +1826,23 @@ function reinitPageAfterTransition() {
     if (typeof initAppTitleEffect === 'function') initAppTitleEffect();
     if (typeof initToolbarObserver === 'function') initToolbarObserver();
     if (typeof initFlashcardTools === 'function') initFlashcardTools();
+    if (typeof initFilterUI === 'function') initFilterUI();
 }
 
 function initSmoothPageTransitions() {
-    const loader = document.getElementById('loader');
-    const loaderFill = document.querySelector('.loader-logo-fill-bar');
-    
-    if (!loader || !loaderFill) return;
-    
+    let loaderWrapper = document.getElementById('loader-wrapper');
+    if (!loaderWrapper) {
+        loaderWrapper = document.createElement('div');
+        loaderWrapper.id = 'loader-wrapper';
+        
+        loaderWrapper.innerHTML = `
+            <div id="loader-hole">
+                <img id="loader-gif">
+            </div>
+        `;
+        document.body.appendChild(loaderWrapper);
+    }
+
     document.addEventListener('click', async (e) => {
         const link = e.target.closest('a[href]');
         if (!link) return;
@@ -1764,61 +1854,102 @@ function initSmoothPageTransitions() {
         
         e.preventDefault();
         const targetUrl = link.href;
+        const depth = window.location.pathname.split('/').length - 2;
+        const prefix = depth > 0 ? '../'.repeat(depth) : '';
+        const gifPath = prefix + 'images/doraemon2.gif';
+        document.getElementById('loader-gif').src = gifPath + '?t=' + new Date().getTime();
+
+        const loaderWrap = document.getElementById('loader-wrapper');
+        const loaderHole = document.getElementById('loader-hole');
+        const loaderGif = document.getElementById('loader-gif');
         
-        loader.style.display = 'flex';
-        gsap.set(loader, { yPercent: 100 });
-        gsap.set(loaderFill, { scaleX: 0 });
+        loaderWrap.style.display = 'block';
+        gsap.set(loaderHole, { width: '200vmax', height: '200vmax' });
+        gsap.set(loaderGif, { opacity: 0 });
         
-        gsap.to(loaderFill, { scaleX: 1, duration: 0.8, ease: 'power2.inOut' });
-        gsap.to(loader, {
-            yPercent: 0,
-            duration: 0.6,
-            ease: 'power3.out',
-            onComplete: async () => {
-                sessionStorage.setItem('hasVisited', 'true');
-                try {
-                    const response = await fetch(targetUrl);
-                    if (!response.ok) throw new Error('Fetch failed');
-                    
-                    const html = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    document.body.innerHTML = doc.body.innerHTML;
-                    document.body.className = doc.body.className;
-                    document.body.id = doc.body.id;
-                    document.title = doc.title;
-                    history.pushState({}, '', targetUrl);
-                    
-                    resetScrollTop();
-                    
-                    reinitPageAfterTransition();
-                    
-                    const newLoader = document.getElementById('loader');
-                    if (newLoader) {
-                        newLoader.style.display = 'flex';
-                        gsap.set(newLoader, { yPercent: 0 });
-                        gsap.to(newLoader, {
-                            yPercent: -100,
-                            duration: 1.3,
-                            ease: 'power3.inOut',
-                            onComplete: () => {
-                                newLoader.style.display = 'none';
+        const tl = gsap.timeline();
+        
+        tl.to(loaderHole, {
+            width: '220px',
+            height: '220px',
+            duration: 0.8,
+            ease: 'power3.inOut'
+        })
+        .to(loaderGif, {
+            opacity: 1,
+            duration: 0.3
+        }, "-=0.2")
+        .add(async () => {
+            try {
+                const response = await fetch(targetUrl);
+                if (!response.ok) throw new Error('Fetch failed');
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                setTimeout(() => {
+                    gsap.to(loaderHole, { 
+                        width: '0px', 
+                        height: '0px', 
+                        duration: 0.5, 
+                        ease: 'power2.in', 
+                        onComplete: () => {
+                            gsap.set(loaderGif, { opacity: 0 });
+                            document.body.removeChild(loaderWrap);
+                            let cleanUrl = targetUrl;
+                            if (cleanUrl.endsWith('/index.html')) {
+                                cleanUrl = cleanUrl.replace('/index.html', '/');
                             }
-                        });
-                    }
-                } catch (err) {
-                    window.location.href = targetUrl;
-                }
+                            history.pushState({}, '', cleanUrl);
+                            document.title = doc.title;
+                            const newStyles = doc.head.querySelectorAll('link[rel="stylesheet"], style');
+                            newStyles.forEach(style => {
+                                const isExisting = Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style')).some(existing => {
+                                    return (style.href && existing.href === style.href) || 
+                                            (style.innerHTML && existing.innerHTML === style.innerHTML);
+                                });
+                                if (!isExisting) document.head.appendChild(style.cloneNode(true));
+                            });
+                            document.body.className = doc.body.className;
+                            document.body.id = doc.body.id;
+                            document.body.innerHTML = doc.body.innerHTML;
+                            const newHtmlLoaderWrap = document.getElementById('loader-wrapper');
+                            if(newHtmlLoaderWrap) newHtmlLoaderWrap.remove();
+                            const oldBarLoader = document.getElementById('loader');
+                            if(oldBarLoader) oldBarLoader.remove();
+                            document.body.appendChild(loaderWrap);
+                            resetScrollTop();
+                            reinitPageAfterTransition();
+                            setTimeout(() => {
+                                gsap.to(loaderHole, {
+                                    width: '200vmax',
+                                    height: '200vmax',
+                                    duration: 1,
+                                    ease: 'power3.out',
+                                    onComplete: () => {
+                                        loaderWrap.style.display = 'none';
+                                    }
+                                });
+                            }, 50);
+                        }
+                    });
+                }, 800); 
+            } catch (err) {
+                window.location.href = targetUrl;
             }
         });
     }, { capture: true });
-    
+
     window.addEventListener('popstate', () => {
         window.location.reload();
     });
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    initHeroAndGraph();
+    initFeedbackBox();
+    initAppTitleEffect();
+    initToolbarObserver();
+    initFlashcardTools();
     initSmoothPageTransitions();
+    initFilterUI();
 });
